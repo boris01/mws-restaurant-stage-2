@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name=viewport content="width=device-width, initial-scale=1" charset="utf-8" />
+  <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/modal.css">
+  <title>Restaurant Reviews</title>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <h1>
+        <a href="/" tabindex="-1">Restaurant Reviews</a>
+      </h1>
+    </nav>
+  </header>
+
+  <main id="maincontent">
+    <section id="map-container">
+      <div id="map" aria-label="Google map" role="application"></div>
+    </section>
+    <section>
+      <div class="filter-options" aria-label="Fiter Results">
+        <h2>Filter Results</h2>
+        <select id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()" aria-label="Select Neighborhoods">
+          <option value="all">All Neighborhoods</option>
+        </select>
+        <select id="cuisines-select" name="cuisines" onchange="updateRestaurants()" aria-label="Select Cuisines">
+          <option value="all">All Cuisines</option>
+        </select>
+      </div>
+      <ul id="restaurants-list" role="contentinfo"></ul>
+    </section>
+  </main>
+
+
+  <footer id="footer">
+    Copyright (c) 2017
+    <a href="/">
+      <strong>Restaurant Reviews</strong>
+    </a> All Rights Reserved.
+  </footer>
+  <div id="openModal" class="modalWindow" role="alertdialog" aria-labelledby="modalHeader" tabindex="-1">
+    <div>
+      <div class="modalHeader">
+        <h2 id="modalHeader">New version available</h2>
+        <div class="modalButtons">
+          <div>
+            <button role="button" aria-label="Refresh application" title="Refresh" id="btnRefresh" class="ok" tabindex="-1">Refresh?</button>
+          </div>
+          <div>
+            <button role="button" aria-label="Dismiss this alert" title="Dismiss" id="btnDismiss" class="cancel" tabindex="-1">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script type="application/javascript" charset="utf-8" src="js/swhelper.js"></script>
+<script type="application/javascript" charset="utf-8" src="js/Dialog.js"></script>
+<script type="application/javascript" charset="utf-8" src="js/dbhelper.js"></script>
+<script type="application/javascript" charset="utf-8" src="js/main.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBFeL_3upfjewT5kik74_YRMizmEuoBFnU&libraries=places&callback=initMap"></script>
+
+</html>
