@@ -1,21 +1,15 @@
+
 var restaurants,
   neighborhoods,
-  cuisines
-  var map
-  var markers = []
+  cuisines;
+var map;
+var markers = [];
 
-/**
- * Fetch neighborhoods and cuisines as soon as the page is loaded.
- */
-document.addEventListener('DOMContentLoaded', (event) => {
-  fetchNeighborhoods();
-  fetchCuisines();
-});
 
 /**
  * Fetch all neighborhoods and set their HTML.
  */
-fetchNeighborhoods = () => {
+const fetchNeighborhoods = () => {
   DBHelper.fetchNeighborhoods((error, neighborhoods) => {
     if (error) { // Got an error
       console.error(error);
@@ -29,7 +23,7 @@ fetchNeighborhoods = () => {
 /**
  * Set neighborhoods HTML.
  */
-fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
+const fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
   const select = document.getElementById('neighborhoods-select');
   neighborhoods.forEach(neighborhood => {
     const option = document.createElement('option');
@@ -42,7 +36,7 @@ fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
 /**
  * Fetch all cuisines and set their HTML.
  */
-fetchCuisines = () => {
+const fetchCuisines = () => {
   DBHelper.fetchCuisines((error, cuisines) => {
     if (error) { // Got an error!
       console.error(error);
@@ -56,7 +50,7 @@ fetchCuisines = () => {
 /**
  * Set cuisines HTML.
  */
-fillCuisinesHTML = (cuisines = self.cuisines) => {
+const fillCuisinesHTML = (cuisines = self.cuisines) => {
   const select = document.getElementById('cuisines-select');
 
   cuisines.forEach(cuisine => {
@@ -67,26 +61,12 @@ fillCuisinesHTML = (cuisines = self.cuisines) => {
   });
 }
 
-/**
- * Initialize Google map, called from HTML.
- */
-window.initMap = () => {
-  let loc = {
-    lat: 40.722216,
-    lng: -73.987501
-  };
-  self.map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 12,
-    center: loc,
-    scrollwheel: false
-  });
-  updateRestaurants();
-}
+
 
 /**
  * Update page and map for current restaurants.
  */
-updateRestaurants = () => {
+const updateRestaurants = () => {
   const cSelect = document.getElementById('cuisines-select');
   const nSelect = document.getElementById('neighborhoods-select');
 
@@ -109,14 +89,15 @@ updateRestaurants = () => {
 /**
  * Clear current restaurants, their HTML and remove their map markers.
  */
-resetRestaurants = (restaurants) => {
+const resetRestaurants = (restaurants) => {
   // Remove all restaurants
   self.restaurants = [];
   const ul = document.getElementById('restaurants-list');
   ul.innerHTML = '';
 
   // Remove all map markers
-  self.markers.forEach(m => m.setMap(null));
+  if (self.markers)
+    self.markers.forEach(m => m.setMap(null));
   self.markers = [];
   self.restaurants = restaurants;
 }
@@ -124,44 +105,54 @@ resetRestaurants = (restaurants) => {
 /**
  * Create all restaurants HTML and add them to the webpage.
  */
-fillRestaurantsHTML = (restaurants = self.restaurants) => {
+const fillRestaurantsHTML = (restaurants = self.restaurants) => {
   const ul = document.getElementById('restaurants-list');
   restaurants.forEach(restaurant => {
     ul.append(createRestaurantHTML(restaurant));
   });
-  addMarkersToMap();
+  loadIntersectionObserver();
 }
 
 /**
  * Create restaurant HTML.
  */
-createRestaurantHTML = (restaurant) => {
+const createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
-  
+
   const picture = document.createElement('picture');
   picture.className = 'restaurant-img';
   picture.setAttribute('role', 'img');
   picture.setAttribute('aria-label', 'restaurant '.concat(restaurant.name));
 
- 
+  const source360 = document.createElement('source');
+  source360.setAttribute('media', '(max-width:360px)');
+  source360.setAttribute('data-srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg.webp', '_300.jpg.webp'));
+  picture.appendChild(source360);
+
+  const source460 = document.createElement('source');
+  source460.setAttribute('media', '(max-width:460px)');
+  source460.setAttribute('data-srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg.webp', '_400.jpg.webp'));
+  picture.appendChild(source460);
+
   const source800 = document.createElement('source');
   source800.setAttribute('media', '(max-width:744px)');
-  source800.setAttribute('srcset', DBHelper.imageUrlForRestaurant(restaurant));
+  source800.setAttribute('data-srcset', DBHelper.imageUrlForRestaurant(restaurant));
   picture.appendChild(source800);
-  
+
   const source400 = document.createElement('source');
   source400.setAttribute('media', '(min-width:745px) and (max-width:1048px)');
-  source400.setAttribute('srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg','_400.jpg'));
+  source400.setAttribute('data-srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg.webp', '_400.jpg.webp'));
   picture.appendChild(source400);
 
   const source300 = document.createElement('source');
   source300.setAttribute('media', '(min-width:1049px)');
-  source300.setAttribute('srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg','_300.jpg'));
+  source300.setAttribute('data-srcset', DBHelper.imageUrlForRestaurant(restaurant).replace('.jpg.webp', '_300.jpg.webp'));
   picture.appendChild(source300);
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
-  image.src = DBHelper.imageUrlForRestaurant(restaurant);
+  //image.src = DBHelper.imageUrlForRestaurant(restaurant);
+  image.setAttribute('data-src', DBHelper.imageUrlForRestaurant(restaurant));
   image.setAttribute('alt', 'restaurant '.concat(restaurant.name));
   picture.appendChild(image);
   li.append(picture);
@@ -187,13 +178,89 @@ createRestaurantHTML = (restaurant) => {
 
   return li
 }
+const loadIntersectionObserver = () => {
 
 
+  let images = document.querySelectorAll('source, img');
+  let map = document.getElementById('map');
+
+  if ('IntersectionObserver' in window) {
+    // IntersectionObserver Supported
+    let config = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.5
+    };
+
+    let observer = new IntersectionObserver(onChange, config);
+    images.forEach(img => observer.observe(img));
+    observer.observe(map)
+    function onChange(changes, observer) {
+      changes.forEach(change => {
+        if (change.intersectionRatio > 0) {
+          // Stop watching and load the image
+          if (change.target === map) {
+            console.log(change.target);
+            loadMaps();
+          }
+          else {
+            loadImage(change.target);
+          }
+          observer.unobserve(change.target);
+        }
+      });
+    }
+
+  } else {
+    // IntersectionObserver NOT Supported
+    images.forEach(image => loadImage(image));
+  }
+}
+const loadImage = (image) => {
+  image.classList.add('fade-in');
+  if (image.dataset && image.dataset.src) {
+    image.src = image.dataset.src;
+  }
+
+  if (image.dataset && image.dataset.srcset) {
+    image.srcset = image.dataset.srcset;
+  }
+}
+
+/**
+ * Fetch neighborhoods and cuisines as soon as the page is loaded.
+ */
+document.addEventListener('DOMContentLoaded', (event) => {
+  fetchNeighborhoods();
+  fetchCuisines();
+  updateRestaurants();
+
+  //setTimeout(loadMaps(), 200);
+});
+
+
+/**
+ * Initialize Google map, called from HTML.
+ */
+
+window.initMap = () => {
+  let loc = {
+    lat: 40.722216,
+    lng: -73.987501
+  };
+  self.map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 12,
+    center: loc,
+    scrollwheel: false
+  });
+  //updateRestaurants();
+  addMarkersToMap();
+}
 
 /**
  * Add markers for current restaurants to the map.
  */
-addMarkersToMap = (restaurants = self.restaurants) => {
+const addMarkersToMap = (restaurants = self.restaurants) => {
   restaurants.forEach(restaurant => {
     // Add marker to the map
     const marker = DBHelper.mapMarkerForRestaurant(restaurant, self.map);
@@ -202,5 +269,11 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     });
     self.markers.push(marker);
   });
+}
+
+const loadMaps = () => {
+  const scriptTag = document.createElement("script");
+  scriptTag.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBFeL_3upfjewT5kik74_YRMizmEuoBFnU&libraries=places&callback=initMap";
+  document.getElementsByTagName("head")[0].appendChild(scriptTag);
 }
 

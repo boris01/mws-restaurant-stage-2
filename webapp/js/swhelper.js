@@ -3,7 +3,7 @@
  * Service worker
  */
 
-(initializeServiceWorker = () => {
+(() => {
     return new Promise((resolve, reject) => {
       if (navigator.serviceWorker) {
         createModalWindowsHtml();

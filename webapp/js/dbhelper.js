@@ -1,3 +1,8 @@
+//import {idb} from './idb.js'
+//var idb = require('idb');
+const indexDBVersion = 1;
+const indexDBStoreName = 'restaurant-idb';
+const indexDBStoreObjects = 'restaurants';
 /**
  * Common database helper functions.
  */
@@ -12,36 +17,99 @@ class DBHelper {
     return `http://localhost:${port}/restaurants`;
 
   }
+  
+  static async openIndexDB() {
+    if (!('indexedDB' in window)) {
+      console.log('This browser doesn\'t support IndexedDB');
+      return;
+    }
+
+    let db = await idb.open(indexDBStoreName, indexDBVersion, (upgradeDb) => {
+      let store = upgradeDb.createObjectStore(indexDBStoreObjects, {
+        keyPath: 'id'
+      });
+      store.createIndex('by-id', 'id');
+
+    });
+
+    return db;
+  }
+
+  static async insertUpdateIndexDB(restaurants) {
+    if (!restaurants) return;
+
+    let db = await this.openIndexDB();
+    if (!db) return;
+
+    let tx = db.transaction(indexDBStoreObjects, 'readwrite');
+    let store = tx.objectStore(indexDBStoreObjects);
+
+    restaurants.forEach(async element => {
+      let record = await store.get(element.id);
+      await store.put(element);
+    });
+
+    db.close();
+
+    return await this.getCacheFromIndexDB();
+  }
+
+  static async getCahedFromIndexDBByID() {
+    let db = await this.openIndexDB();
+    if (!db) return;
+
+    let tx = db.transaction(indexDBStoreObjects, 'readwrite');
+    let store = tx.objectStore(indexDBStoreObjects);
+    let restaurant = await store.get(element.id);
+    console.log(restaurant);
+    db.close();
+    return restaurant;
+  }
+
+  static async getCacheFromIndexDB() {
+    let db = await this.openIndexDB();
+    if (!db) return;
+
+    let tx = db.transaction(indexDBStoreObjects, 'readwrite');
+    let store = tx.objectStore(indexDBStoreObjects);
+    let restaurantsIndex = store.index('by-id');
+
+    let restaurants = await restaurantsIndex.getAll();
+    console.log(restaurants);
+    db.close();
+    return restaurants;
+
+  }
+
 
   /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    // let xhr = new XMLHttpRequest();
-    // xhr.open('GET', DBHelper.DATABASE_URL);
-    // xhr.onload = () => {
-    //   if (xhr.status === 200) { // Got a success response from server!
-    //    // const json = JSON.parse(xhr.responseText);
-    //     const restaurants = JSON.parse(xhr.responseText); // json.restaurants;
-    //     callback(null, restaurants);
-    //   } else { // Oops!. Got an error from server.
-    //     const error = (`Request failed. Returned status of ${xhr.status}`);
-    //     callback(error, null);
-    //   }
-    // };
-    // xhr.send();
+
+
     fetch(DBHelper.DATABASE_URL, {
       method: 'GET'
     }).then(response => {
       if (response.ok) {
         return response.json();
       }
-      throw new Error(`Network response returned error. Status ${response.status}`);
+      else {
+        return this.getCacheFromIndexDB();
+      }
+      //throw new Error(`Network response returned error. Status ${response.status}`);
     }).then(response => {
-      const restaurants = response;
-      callback(null, restaurants);
+      this.insertUpdateIndexDB(response).then(res => {
+        const restaurants = response;
+        callback(null, restaurants);
+      });
     }).catch(e => {
-      console.log(`fetchRestaurants:: error ${e.message}`);
+      this.getCacheFromIndexDB().then(response => {
+        const restaurants = response;
+        callback(null, restaurants);
+      }).catch(e => {
+        console.log(`fetchRestaurants:: error ${e.message}`);
+      });
     });
   }
 
@@ -164,7 +232,7 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    return (`/img/${restaurant.photograph}.jpg`);
+    return (`/img/${restaurant.photograph}.jpg.webp`);
   }
 
   /**
