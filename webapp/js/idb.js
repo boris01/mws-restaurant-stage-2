@@ -1,3 +1,4 @@
+//Taken from https://github.com/jakearchibald/idb/tree/master/lib
 'use strict';
 
 (function() {
