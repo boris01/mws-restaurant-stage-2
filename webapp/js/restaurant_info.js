@@ -15,8 +15,6 @@ window.initMap = () => {
         scrollwheel: false
       });
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
-      // let map = document.getElementById("map-container");
-      // map.style.display = "block";
     }
   });
 }
