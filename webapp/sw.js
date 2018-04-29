@@ -1,4 +1,4 @@
-const staticCacheName = ['restaurant-static-v204'];
+const staticCacheName = ['restaurant-static-v206'];
 
 
 const pageUrls = [

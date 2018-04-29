@@ -1,4 +1,4 @@
-const staticCacheName = ['restaurant-static-v204'];
+const staticCacheName = ['restaurant-static-v206'];
 
 
 const pageUrls = [
@@ -7,20 +7,12 @@ const pageUrls = [
     '/restaurant.html'
 ];
 const scriptUrls = [
-    // '/js/dbhelper.js',
-    // '/js/main.js',
-    // '/js/restaurant_info.js',
-    // '/js/Dialog.js',
-    // '/js/swhelper.js'
     '/js/app.js',
     '/js/restaurant.js',
     '/manifest.json'
 ];
 const dataUrls = ['./data/restaurants.json'];
 const stylesUrls = [
-    //'/css/styles.css',
-    //'/css/responsive.css',
-    // '/css/modal.css'
     '/css/all.css'
 ];
 const imgsUrls = [
@@ -88,11 +80,7 @@ const allCaches = [
     ...pageUrls
     , ...imgsUrls
     , ...icons
-   // , ...stylesUrls
-    , ...scriptUrls,
-    // ,...dataUrls
-    // ,...stylesUrls
-    // ,...imgsUrls
+    , ...scriptUrls
 ];
 
 self.addEventListener('install', function (event) {
@@ -127,37 +115,6 @@ self.addEventListener('activate', event => {
             })
     );
 });
-
-// self.addEventListener('fetch', function (event) {
-
-//     if (event.request.url.indexOf('https://maps.googleapis.com/') > -1) {
-//         event.respondWith(serveGoogleMap(event));
-//         return;
-//     }
-
-//     if (event.request.url.indexOf('/restaurants') > -1) {
-//         return;
-//     }
-
-//     event.respondWith(
-//         caches.match(event.request, { 'ignoreSearch': true }).then(async response => {
-//             if (response) return response;
-
-//             let networkFetchRequest = event.request.clone();
-//             return await fetch(networkFetchRequest).then(response => {
-//                 if (!response) return response;
-//                 let cacheResponse = response.clone();
-//                 caches.open(staticCacheName).then(cache => {
-//                     cache.put(event.request, cacheResponse);
-//                 });
-//                 return response;
-//             });
-//         })
-//             .catch(err => console.log(err, event.request))
-//     );
-
-
-// });
 
 self.addEventListener('fetch', event => {
 

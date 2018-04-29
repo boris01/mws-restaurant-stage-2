@@ -154,7 +154,7 @@ const createReviewHTML = (review, tabindex) => {
   const li = document.createElement('li');
   li.setAttribute('tabindex', tabindex);
   const topDiv = document.createElement('div');
-  topDiv.id = 'review-header';
+  topDiv.className = 'review-header';
   const name = document.createElement('p');
   name.className = 'review-name';
   name.innerHTML = review.name;
